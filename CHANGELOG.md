@@ -54,6 +54,11 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 * In color-words diffs, context line numbers are now rendered with decreased
   intensity.
 
+* Changed Git representation of conflicted commits to include files from the
+  first side of the conflict. This should prevent unchanged files from being
+  highlighted as "added" in editors when checking out a conflicted commit in a
+  colocated workspace.
+
 ### Fixed bugs
 
 * Broken symlink on Windows. [#6934](https://github.com/jj-vcs/jj/issues/6934).
