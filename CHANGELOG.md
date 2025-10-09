@@ -64,6 +64,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   other can be referred to as `xyz/1`. These suffixes are shown in the log when
   necessary to make a change ID unambiguous.
 
+* Conflict labels can now contain information about where the sides of a
+  conflict came from (currently this is only supported for conflicts created by
+  certain commands).
+
 ### Fixed bugs
 
 * Broken symlink on Windows. [#6934](https://github.com/jj-vcs/jj/issues/6934).
