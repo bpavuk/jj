@@ -39,6 +39,7 @@ use crate::index::IndexResult;
 use crate::iter_util::fallible_any;
 use crate::matchers::Matcher;
 use crate::matchers::Visit;
+use crate::merge::Diff;
 use crate::merge::Merge;
 use crate::merged_tree::MergedTree;
 use crate::merged_tree::MergedTreeBuilder;
@@ -1154,6 +1155,20 @@ impl CommitWithSelection {
     /// can be true if the commit is itself empty.
     pub fn is_empty_selection(&self) -> bool {
         self.selected_tree.tree_ids() == self.parent_tree.tree_ids()
+    }
+
+    /// Returns conflict labels for the diff represented by this selection.
+    pub fn conflict_labels(&self) -> BackendResult<Diff<String>> {
+        let commit_label = self.commit.conflict_label();
+        let parent_label = format!("parents of {commit_label}");
+        if self.is_full_selection() {
+            Ok(Diff::new(parent_label, commit_label))
+        } else {
+            Ok(Diff::new(
+                parent_label,
+                format!("selected changes from {commit_label}"),
+            ))
+        }
     }
 }
 
