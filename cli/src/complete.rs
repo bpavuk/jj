@@ -859,7 +859,7 @@ fn modified_files_from_rev_with_jj_cmd(
     // In case of a rename, one entry of `diff` results in two suggestions.
     let template = indoc! {r#"
         concat(
-          status ++ ' ' ++ path.display() ++ "\n",
+          status ++ ' ' ++ target.path().display() ++ "\n",
           if(status == 'renamed', 'renamed.source ' ++ source.path().display() ++ "\n"),
         )
     "#};

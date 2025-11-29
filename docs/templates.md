@@ -297,8 +297,8 @@ This type holds the diff stats per file. The following methods are defined.
 * `.bytes_delta() -> Integer`: The difference in size of the file, in bytes.
 * `.lines_added() -> Integer`: Number of lines added.
 * `.lines_removed() -> Integer`: Number of lines deleted.
-* `.path() -> RepoPath`: Path to the entry. If the entry is a copy/rename, this
-  points to the target (or right) entry.
+* `.path() -> DiffPath`: Path to the entry. If the entry is a copy/rename, this
+  formats the path appropriately.
 * `.status() -> String`: One of `"modified"`, `"added"`, `"removed"`, `"copied"`, or `"renamed"`.
 * `.status_char() -> String`: One of `"M"` (modified), `"A"` (added), `"D"` (removed),
   `"C"` (copied), or `"R"` (renamed).
@@ -614,12 +614,24 @@ _Conversion: `Boolean`: no, `Serialize`: no, `Template`: no_
 
 This type cannot be printed. The following methods are defined.
 
-* `.path() -> RepoPath`: Path to the entry. If the entry is a copy/rename, this
-  points to the target (or right) entry.
+* `.path() -> DiffPath`: Path to the entry. If the entry is a copy/rename, this
+  formats the path appropriately.
 * `.status() -> String`: One of `"modified"`, `"added"`, `"removed"`,
   `"copied"`, or `"renamed"`.
 * `.source() -> TreeEntry`: The source (or left) entry.
 * `.target() -> TreeEntry`: The target (or right) entry.
+
+### `DiffPath` type
+
+_Conversion: `Boolean`: no, `Serialize`: no, `Template`: yes_
+
+This type represents a path with optional copy/rename information. The following
+methods are defined.
+
+* `.display() -> String`: Formatted path with common prefix/suffix extraction
+  for renames and copies. For example, `src/{old => new}/file.rs` instead of
+  showing full source and target paths. For non-copy/rename operations, returns
+  the plain file path.
 
 ### `TreeEntry` type
 

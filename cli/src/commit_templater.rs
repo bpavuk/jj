@@ -301,6 +301,11 @@ impl<'repo> TemplateLanguage<'repo> for CommitTemplateLanguage<'repo> {
                 let inner_property = property.try_unwrap(type_name).into_dyn();
                 build(self, diagnostics, build_ctx, inner_property, function)
             }
+            CommitTemplatePropertyKind::DiffPath(property) => {
+                let table = &self.build_fn_table.diff_path_methods;
+                let build = template_parser::lookup_method(type_name, table, function)?;
+                build(self, diagnostics, build_ctx, property, function)
+            }
             CommitTemplatePropertyKind::ChangeId(property) => {
                 let table = &self.build_fn_table.change_id_methods;
                 let build = template_parser::lookup_method(type_name, table, function)?;
@@ -434,6 +439,7 @@ pub enum CommitTemplatePropertyKind<'repo> {
     RefSymbolOpt(BoxedTemplateProperty<'repo, Option<RefSymbolBuf>>),
     RepoPath(BoxedTemplateProperty<'repo, RepoPathBuf>),
     RepoPathOpt(BoxedTemplateProperty<'repo, Option<RepoPathBuf>>),
+    DiffPath(BoxedTemplateProperty<'repo, DiffPath>),
     ChangeId(BoxedTemplateProperty<'repo, ChangeId>),
     CommitId(BoxedTemplateProperty<'repo, CommitId>),
     ShortestIdPrefix(BoxedTemplateProperty<'repo, ShortestIdPrefix>),
@@ -468,6 +474,7 @@ template_builder::impl_property_wrappers!(<'repo> CommitTemplatePropertyKind<'re
     RefSymbolOpt(Option<RefSymbolBuf>),
     RepoPath(RepoPathBuf),
     RepoPathOpt(Option<RepoPathBuf>),
+    DiffPath(DiffPath),
     ChangeId(ChangeId),
     CommitId(CommitId),
     ShortestIdPrefix(ShortestIdPrefix),
@@ -512,6 +519,7 @@ impl<'repo> CoreTemplatePropertyVar<'repo> for CommitTemplatePropertyKind<'repo>
             Self::RefSymbolOpt(_) => "Option<RefSymbol>",
             Self::RepoPath(_) => "RepoPath",
             Self::RepoPathOpt(_) => "Option<RepoPath>",
+            Self::DiffPath(_) => "DiffPath",
             Self::ChangeId(_) => "ChangeId",
             Self::CommitId(_) => "CommitId",
             Self::ShortestIdPrefix(_) => "ShortestIdPrefix",
@@ -548,6 +556,7 @@ impl<'repo> CoreTemplatePropertyVar<'repo> for CommitTemplatePropertyKind<'repo>
             Self::RefSymbolOpt(property) => Some(property.map(|opt| opt.is_some()).into_dyn()),
             Self::RepoPath(_) => None,
             Self::RepoPathOpt(property) => Some(property.map(|opt| opt.is_some()).into_dyn()),
+            Self::DiffPath(_) => None,
             Self::ChangeId(_) => None,
             Self::CommitId(_) => None,
             Self::ShortestIdPrefix(_) => None,
@@ -613,6 +622,7 @@ impl<'repo> CoreTemplatePropertyVar<'repo> for CommitTemplatePropertyKind<'repo>
             Self::RefSymbolOpt(property) => Some(property.into_serialize()),
             Self::RepoPath(property) => Some(property.into_serialize()),
             Self::RepoPathOpt(property) => Some(property.into_serialize()),
+            Self::DiffPath(_) => None,
             Self::ChangeId(property) => Some(property.into_serialize()),
             Self::CommitId(property) => Some(property.into_serialize()),
             Self::ShortestIdPrefix(property) => Some(property.into_serialize()),
@@ -649,6 +659,7 @@ impl<'repo> CoreTemplatePropertyVar<'repo> for CommitTemplatePropertyKind<'repo>
             Self::RefSymbolOpt(property) => Some(property.into_template()),
             Self::RepoPath(property) => Some(property.into_template()),
             Self::RepoPathOpt(property) => Some(property.into_template()),
+            Self::DiffPath(property) => Some(property.into_template()),
             Self::ChangeId(property) => Some(property.into_template()),
             Self::CommitId(property) => Some(property.into_template()),
             Self::ShortestIdPrefix(property) => Some(property.into_template()),
@@ -718,6 +729,7 @@ impl<'repo> CoreTemplatePropertyVar<'repo> for CommitTemplatePropertyKind<'repo>
             (Self::RefSymbolOpt(_), _) => None,
             (Self::RepoPath(_), _) => None,
             (Self::RepoPathOpt(_), _) => None,
+            (Self::DiffPath(_), _) => None,
             (Self::ChangeId(_), _) => None,
             (Self::CommitId(_), _) => None,
             (Self::ShortestIdPrefix(_), _) => None,
@@ -760,6 +772,7 @@ impl<'repo> CoreTemplatePropertyVar<'repo> for CommitTemplatePropertyKind<'repo>
             (Self::RefSymbolOpt(_), _) => None,
             (Self::RepoPath(_), _) => None,
             (Self::RepoPathOpt(_), _) => None,
+            (Self::DiffPath(_), _) => None,
             (Self::ChangeId(_), _) => None,
             (Self::CommitId(_), _) => None,
             (Self::ShortestIdPrefix(_), _) => None,
@@ -797,6 +810,7 @@ pub struct CommitTemplateBuildFnTable<'repo> {
     pub workspace_ref_methods: CommitTemplateBuildMethodFnMap<'repo, WorkspaceRef>,
     pub workspace_ref_list_methods: CommitTemplateBuildMethodFnMap<'repo, Vec<WorkspaceRef>>,
     pub repo_path_methods: CommitTemplateBuildMethodFnMap<'repo, RepoPathBuf>,
+    pub diff_path_methods: CommitTemplateBuildMethodFnMap<'repo, DiffPath>,
     pub change_id_methods: CommitTemplateBuildMethodFnMap<'repo, ChangeId>,
     pub commit_id_methods: CommitTemplateBuildMethodFnMap<'repo, CommitId>,
     pub shortest_id_prefix_methods: CommitTemplateBuildMethodFnMap<'repo, ShortestIdPrefix>,
@@ -828,6 +842,7 @@ impl CommitTemplateBuildFnTable<'_> {
             workspace_ref_methods: HashMap::new(),
             workspace_ref_list_methods: HashMap::new(),
             repo_path_methods: HashMap::new(),
+            diff_path_methods: HashMap::new(),
             change_id_methods: HashMap::new(),
             commit_id_methods: HashMap::new(),
             shortest_id_prefix_methods: HashMap::new(),
@@ -858,6 +873,7 @@ impl CommitTemplateBuildFnTable<'_> {
             workspace_ref_methods,
             workspace_ref_list_methods,
             repo_path_methods,
+            diff_path_methods,
             change_id_methods,
             commit_id_methods,
             shortest_id_prefix_methods,
@@ -891,6 +907,7 @@ impl CommitTemplateBuildFnTable<'_> {
             workspace_ref_list_methods,
         );
         merge_fn_map(&mut self.repo_path_methods, repo_path_methods);
+        merge_fn_map(&mut self.diff_path_methods, diff_path_methods);
         merge_fn_map(&mut self.change_id_methods, change_id_methods);
         merge_fn_map(&mut self.commit_id_methods, commit_id_methods);
         merge_fn_map(
@@ -933,6 +950,7 @@ impl CommitTemplateBuildFnTable<'_> {
             workspace_ref_methods: builtin_workspace_ref_methods(),
             workspace_ref_list_methods: template_builder::builtin_formattable_list_methods(),
             repo_path_methods: builtin_repo_path_methods(),
+            diff_path_methods: builtin_diff_path_methods(),
             change_id_methods: builtin_change_id_methods(),
             commit_id_methods: builtin_commit_id_methods(),
             shortest_id_prefix_methods: builtin_shortest_id_prefix_methods(),
@@ -1945,6 +1963,17 @@ impl Template for RepoPathBuf {
     }
 }
 
+impl Template for DiffPath {
+    fn format(&self, formatter: &mut TemplateFormatter) -> io::Result<()> {
+        match self {
+            Self::Plain(path) => write!(formatter, "{}", path.as_internal_file_string()),
+            Self::Copied(path) => {
+                write!(formatter, "{}", path.target.as_internal_file_string())
+            }
+        }
+    }
+}
+
 fn builtin_repo_path_methods<'repo>() -> CommitTemplateBuildMethodFnMap<'repo, RepoPathBuf> {
     // Not using maplit::hashmap!{} or custom declarative macro here because
     // code completion inside macro is quite restricted.
@@ -1981,6 +2010,25 @@ fn builtin_repo_path_methods<'repo>() -> CommitTemplateBuildMethodFnMap<'repo, R
         |_language, _diagnostics, _build_ctx, self_property, function| {
             function.expect_no_arguments()?;
             let out_property = self_property.map(|path| Some(path.parent()?.to_owned()));
+            Ok(out_property.into_dyn_wrapped())
+        },
+    );
+    map
+}
+
+fn builtin_diff_path_methods<'repo>() -> CommitTemplateBuildMethodFnMap<'repo, DiffPath> {
+    let mut map = CommitTemplateBuildMethodFnMap::<DiffPath>::new();
+    map.insert(
+        "display",
+        |language, _diagnostics, _build_ctx, self_property, function| {
+            function.expect_no_arguments()?;
+            let path_converter = language.path_converter;
+            let out_property = self_property.map(move |path| match path {
+                DiffPath::Plain(path) => path_converter.format_file_path(&path),
+                DiffPath::Copied(path) => {
+                    path_converter.format_copied_path(path.source(), &path.target)
+                }
+            });
             Ok(out_property.into_dyn_wrapped())
         },
     );
@@ -2410,6 +2458,25 @@ fn builtin_tree_diff_methods<'repo>() -> CommitTemplateBuildMethodFnMap<'repo, T
     map
 }
 
+/// A path that may include copy/rename information for display purposes.
+#[derive(Clone, Debug)]
+pub enum DiffPath {
+    /// A simple path without copy information.
+    Plain(RepoPathBuf),
+    /// A path with copy/rename information (source and target).
+    Copied(CopiesTreeDiffEntryPath),
+}
+
+impl DiffPath {
+    fn from_diff_entry_path(path: &CopiesTreeDiffEntryPath) -> Self {
+        if path.copy_operation().is_some() {
+            Self::Copied(path.clone())
+        } else {
+            Self::Plain(path.target.clone())
+        }
+    }
+}
+
 /// [`MergedTree`] diff entry.
 #[derive(Clone, Debug)]
 pub struct TreeDiffEntry {
@@ -2453,7 +2520,7 @@ fn builtin_tree_diff_entry_methods<'repo>() -> CommitTemplateBuildMethodFnMap<'r
         "path",
         |_language, _diagnostics, _build_ctx, self_property, function| {
             function.expect_no_arguments()?;
-            let out_property = self_property.map(|entry| entry.path.target);
+            let out_property = self_property.map(|entry| DiffPath::from_diff_entry_path(&entry.path));
             Ok(out_property.into_dyn_wrapped())
         },
     );
@@ -2465,7 +2532,6 @@ fn builtin_tree_diff_entry_methods<'repo>() -> CommitTemplateBuildMethodFnMap<'r
             Ok(out_property.into_dyn_wrapped())
         },
     );
-    // TODO: add status_code() or status_char()?
     map.insert(
         "source",
         |_language, _diagnostics, _build_ctx, self_property, function| {
@@ -2619,7 +2685,7 @@ fn builtin_diff_stat_entry_methods<'repo>() -> CommitTemplateBuildMethodFnMap<'r
         "path",
         |_language, _diagnostics, _build_ctx, self_property, function| {
             function.expect_no_arguments()?;
-            let out_property = self_property.map(|entry| entry.path.target);
+            let out_property = self_property.map(|entry| DiffPath::from_diff_entry_path(&entry.path));
             Ok(out_property.into_dyn_wrapped())
         },
     );

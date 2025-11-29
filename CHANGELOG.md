@@ -193,6 +193,11 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   of sides in a merge conflict (1 for non-conflicted files, 2 or more for
   conflicts).
 
+* `TreeDiffEntry.path()` and `DiffStatEntry.path()` now return a `DiffPath` type
+  that formats renames/copies appropriately when used with `.display()`. For example,
+  `src/{old => new}/file.rs` instead of showing full paths. `TreeEntry.path()`
+  continues to return `RepoPath` as it has no copy information.
+
 ### Fixed bugs
 
 * `jj fix` now prints a warning if a tool failed to run on a file.
