@@ -2492,8 +2492,8 @@ impl TreeDiffEntry {
         })
     }
 
-    fn status_label(&self) -> &'static str {
-        diff_util::diff_status(&self.path, &self.values).label()
+    fn status(&self) -> diff_util::DiffEntryStatus {
+        diff_util::diff_status(&self.path, &self.values)
     }
 
     fn into_source_entry(self) -> TreeEntry {
@@ -2524,11 +2524,20 @@ fn builtin_tree_diff_entry_methods<'repo>() -> CommitTemplateBuildMethodFnMap<'r
             Ok(out_property.into_dyn_wrapped())
         },
     );
+    // TODO: Unify these into a status object with label and char?
     map.insert(
         "status",
         |_language, _diagnostics, _build_ctx, self_property, function| {
             function.expect_no_arguments()?;
-            let out_property = self_property.map(|entry| entry.status_label().to_owned());
+            let out_property = self_property.map(|entry| entry.status().label().to_owned());
+            Ok(out_property.into_dyn_wrapped())
+        },
+    );
+    map.insert(
+        "status_char",
+        |_language, _diagnostics, _build_ctx, self_property, function| {
+            function.expect_no_arguments()?;
+            let out_property = self_property.map(|entry| entry.status().char().to_string());
             Ok(out_property.into_dyn_wrapped())
         },
     );
