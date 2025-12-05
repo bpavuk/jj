@@ -64,6 +64,9 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   other can be referred to as `xyz/1`. These suffixes are shown in the log when
   necessary to make a change ID unambiguous.
 
+* `jj git push --bookmark <name>` will now automatically track the bookmark in
+  cases where the user intent is unambiguous.
+
 ### Fixed bugs
 
 * Broken symlink on Windows. [#6934](https://github.com/jj-vcs/jj/issues/6934).
