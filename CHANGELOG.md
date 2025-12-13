@@ -54,6 +54,9 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 * In color-words diffs, context line numbers are now rendered with decreased
   intensity.
 
+* `jj util gc` now prunes unreachable files in `.jj/repo/store/extra` to save
+  disk space.
+
 ### Fixed bugs
 
 * Broken symlink on Windows. [#6934](https://github.com/jj-vcs/jj/issues/6934).
