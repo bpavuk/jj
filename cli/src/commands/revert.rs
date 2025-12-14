@@ -20,6 +20,9 @@ use clap_complete::ArgValueCompleter;
 use indexmap::IndexSet;
 use itertools::Itertools as _;
 use jj_lib::backend::CommitId;
+use jj_lib::commit::Commit;
+use jj_lib::merge::Merge;
+use jj_lib::merged_tree::MergedTree;
 use jj_lib::object_id::ObjectId as _;
 use jj_lib::repo::Repo as _;
 use jj_lib::rewrite::merge_commit_trees;
@@ -139,6 +142,7 @@ pub(crate) fn cmd_revert(
         .try_collect()?;
     let mut new_base_tree = merge_commit_trees(tx.repo(), &new_parents).block_on()?;
     let mut parent_ids = new_parent_ids;
+    let mut parent_labels = new_parents.iter().map(Commit::conflict_label).join(", ");
 
     let mut reverted_commits = vec![];
     for (commit_to_revert, new_commit_description) in
@@ -146,16 +150,29 @@ pub(crate) fn cmd_revert(
     {
         let old_base_tree = commit_to_revert.parent_tree(tx.repo())?;
         let old_tree = commit_to_revert.tree();
-        let new_tree = new_base_tree
-            .merge_unlabeled(old_tree, old_base_tree)
-            .block_on()?;
-        let new_parent_ids = parent_ids.clone();
+        let commit_to_revert_label = commit_to_revert.conflict_label();
+        let new_tree = MergedTree::merge(Merge::from_vec(vec![
+            (
+                new_base_tree,
+                format!("revert destination ({parent_labels})"),
+            ),
+            (
+                old_tree,
+                format!("reverted commit ({commit_to_revert_label})"),
+            ),
+            (
+                old_base_tree,
+                format!("parents of {commit_to_revert_label}"),
+            ),
+        ]))
+        .block_on()?;
         let new_commit = tx
             .repo_mut()
-            .new_commit(new_parent_ids, new_tree.clone())
+            .new_commit(parent_ids, new_tree.clone())
             .set_description(new_commit_description)
             .write()?;
         parent_ids = vec![new_commit.id().clone()];
+        parent_labels = new_commit.conflict_label();
         reverted_commits.push(new_commit);
         new_base_tree = new_tree;
     }
