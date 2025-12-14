@@ -298,6 +298,7 @@ pub fn absorb_hunks(
     let mut rewritten_source = None;
     let mut rewritten_destinations = Vec::new();
     let mut num_rebased = 0;
+    let source_commit_label = source.commit.conflict_label();
     // Rewrite commits in topological order so that descendant commits wouldn't
     // be rewritten multiple times.
     repo.transform_descendants(selected_trees.keys().cloned().collect(), async |rewriter| {
@@ -319,11 +320,24 @@ pub fn absorb_hunks(
         };
         // Merge hunks between source parent tree and selected tree
         let selected_tree = tree_builder.write_tree()?;
+        let destination_label = rewriter.old_commit().conflict_label();
         let commit_builder = rewriter.rebase().await?;
         let destination_tree = commit_builder.tree();
-        let new_tree = destination_tree
-            .merge_unlabeled(source.parent_tree.clone(), selected_tree)
-            .block_on()?;
+        let new_tree = MergedTree::merge(Merge::from_vec(vec![
+            (
+                destination_tree,
+                format!("absorb destination ({destination_label})"),
+            ),
+            (
+                source.parent_tree.clone(),
+                format!("parents of {source_commit_label}"),
+            ),
+            (
+                selected_tree,
+                format!("absorbed changes (from {source_commit_label})"),
+            ),
+        ]))
+        .block_on()?;
         let mut predecessors = commit_builder.predecessors().to_vec();
         predecessors.push(source.commit.id().clone());
         let new_commit = commit_builder

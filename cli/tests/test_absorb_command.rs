@@ -176,12 +176,12 @@ fn test_absorb_replace_single_line_hunk() {
     insta::assert_snapshot!(output, @r"
     ------- stderr -------
     Absorbed changes into 1 revisions:
-      qpvuntsm 19034586 (conflict) 1
+      qpvuntsm cc38391f (conflict) 1
     Rebased 1 descendant commits.
-    Working copy  (@) now at: mzvwutvl f9c426f2 (empty) (no description set)
-    Parent commit (@-)      : kkmpptxz a5f84679 2
+    Working copy  (@) now at: mzvwutvl 452a10ae (empty) (no description set)
+    Parent commit (@-)      : kkmpptxz e86401a1 2
     New conflicts appeared in 1 commits:
-      qpvuntsm 19034586 (conflict) 1
+      qpvuntsm cc38391f (conflict) 1
     Hint: To resolve the conflicts, start by creating a commit on top of
     the conflicted commit:
       jj new qpvuntsm
@@ -192,24 +192,24 @@ fn test_absorb_replace_single_line_hunk() {
     ");
 
     insta::assert_snapshot!(get_diffs(&work_dir, "mutable()"), @r"
-    @  mzvwutvl f9c426f2 (empty) (no description set)
-    ○  kkmpptxz a5f84679 2
+    @  mzvwutvl 452a10ae (empty) (no description set)
+    ○  kkmpptxz e86401a1 2
     │  diff --git a/file1 b/file1
     │  index 0000000000..2f87e8e465 100644
     │  --- a/file1
     │  +++ b/file1
     │  @@ -1,10 +1,3 @@
     │  -<<<<<<< conflict 1 of 1
-    │  -%%%%%%% side #1 compared with base
+    │  -%%%%%%% absorb destination (qpvuntsm aa6cb9bc) compared with parents of zsuskuln 5d926f12
     │  --2a
     │  - 1a
     │  --2b
-    │  -+++++++ side #2
+    │  -+++++++ absorbed changes (from zsuskuln 5d926f12)
     │   2a
     │   1A
     │   2b
     │  ->>>>>>> conflict 1 of 1 ends
-    ×  qpvuntsm 19034586 (conflict) 1
+    ×  qpvuntsm cc38391f (conflict) 1
     │  diff --git a/file1 b/file1
     ~  new file mode 100644
        index 0000000000..0000000000
@@ -217,11 +217,11 @@ fn test_absorb_replace_single_line_hunk() {
        +++ b/file1
        @@ -0,0 +1,10 @@
        +<<<<<<< conflict 1 of 1
-       +%%%%%%% side #1 compared with base
+       +%%%%%%% absorb destination (qpvuntsm aa6cb9bc) compared with parents of zsuskuln 5d926f12
        +-2a
        + 1a
        +-2b
-       ++++++++ side #2
+       ++++++++ absorbed changes (from zsuskuln 5d926f12)
        +2a
        +1A
        +2b
@@ -550,14 +550,14 @@ fn test_absorb_deleted_file_with_multiple_hunks() {
     insta::assert_snapshot!(output, @r"
     ------- stderr -------
     Absorbed changes into 2 revisions:
-      kkmpptxz 9210e16d (conflict) 2
-      qpvuntsm a52f61f7 (conflict) 1
+      kkmpptxz 3caa0f14 (conflict) 2
+      qpvuntsm 765f8458 (conflict) 1
     Rebased 1 descendant commits.
-    Working copy  (@) now at: zsuskuln f8744d38 (no description set)
-    Parent commit (@-)      : kkmpptxz 9210e16d (conflict) 2
+    Working copy  (@) now at: zsuskuln c1bf6368 (no description set)
+    Parent commit (@-)      : kkmpptxz 3caa0f14 (conflict) 2
     New conflicts appeared in 2 commits:
-      kkmpptxz 9210e16d (conflict) 2
-      qpvuntsm a52f61f7 (conflict) 1
+      kkmpptxz 3caa0f14 (conflict) 2
+      qpvuntsm 765f8458 (conflict) 1
     Hint: To resolve the conflicts, start by creating a commit on top of
     the first conflicted commit:
       jj new qpvuntsm
@@ -570,7 +570,7 @@ fn test_absorb_deleted_file_with_multiple_hunks() {
     ");
 
     insta::assert_snapshot!(get_diffs(&work_dir, "mutable()"), @r"
-    @  zsuskuln f8744d38 (no description set)
+    @  zsuskuln c1bf6368 (no description set)
     │  diff --git a/file2 b/file2
     │  deleted file mode 100644
     │  index 0000000000..0000000000
@@ -578,13 +578,13 @@ fn test_absorb_deleted_file_with_multiple_hunks() {
     │  +++ /dev/null
     │  @@ -1,7 +0,0 @@
     │  -<<<<<<< conflict 1 of 1
-    │  -%%%%%%% side #1 compared with base
+    │  -%%%%%%% absorb destination (kkmpptxz 33662096) compared with parents of zsuskuln d6492c8f
     │  --1a
     │  - 1b
-    │  -+++++++ side #2
+    │  -+++++++ absorbed changes (from zsuskuln d6492c8f)
     │  -1a
     │  ->>>>>>> conflict 1 of 1 ends
-    ×  kkmpptxz 9210e16d (conflict) 2
+    ×  kkmpptxz 3caa0f14 (conflict) 2
     │  diff --git a/file1 b/file1
     │  deleted file mode 100644
     │  index 0000000000..0000000000
@@ -592,26 +592,27 @@ fn test_absorb_deleted_file_with_multiple_hunks() {
     │  +++ /dev/null
     │  @@ -1,6 +0,0 @@
     │  -<<<<<<< conflict 1 of 1
-    │  -%%%%%%% side #1 compared with base
+    │  -%%%%%%% absorb destination (qpvuntsm 66b2ce5b) compared with parents of zsuskuln d6492c8f
     │  - 1a
     │  -+1b
-    │  -+++++++ side #2
+    │  -+++++++ absorbed changes (from zsuskuln d6492c8f)
     │  ->>>>>>> conflict 1 of 1 ends
     │  diff --git a/file2 b/file2
     │  --- a/file2
     │  +++ b/file2
     │  @@ -1,7 +1,7 @@
     │   <<<<<<< conflict 1 of 1
-    │   %%%%%%% side #1 compared with base
+    │  -%%%%%%% absorb destination (qpvuntsm 66b2ce5b) compared with parents of zsuskuln d6492c8f
     │  - 1a
     │  --1b
+    │  +%%%%%%% absorb destination (kkmpptxz 33662096) compared with parents of zsuskuln d6492c8f
     │  +-1a
     │  + 1b
-    │   +++++++ side #2
+    │   +++++++ absorbed changes (from zsuskuln d6492c8f)
     │  -1b
     │  +1a
     │   >>>>>>> conflict 1 of 1 ends
-    ×  qpvuntsm a52f61f7 (conflict) 1
+    ×  qpvuntsm 765f8458 (conflict) 1
     │  diff --git a/file1 b/file1
     ~  new file mode 100644
        index 0000000000..0000000000
@@ -619,10 +620,10 @@ fn test_absorb_deleted_file_with_multiple_hunks() {
        +++ b/file1
        @@ -0,0 +1,6 @@
        +<<<<<<< conflict 1 of 1
-       +%%%%%%% side #1 compared with base
+       +%%%%%%% absorb destination (qpvuntsm 66b2ce5b) compared with parents of zsuskuln d6492c8f
        + 1a
        ++1b
-       ++++++++ side #2
+       ++++++++ absorbed changes (from zsuskuln d6492c8f)
        +>>>>>>> conflict 1 of 1 ends
        diff --git a/file2 b/file2
        new file mode 100644
@@ -631,10 +632,10 @@ fn test_absorb_deleted_file_with_multiple_hunks() {
        +++ b/file2
        @@ -0,0 +1,7 @@
        +<<<<<<< conflict 1 of 1
-       +%%%%%%% side #1 compared with base
+       +%%%%%%% absorb destination (qpvuntsm 66b2ce5b) compared with parents of zsuskuln d6492c8f
        + 1a
        +-1b
-       ++++++++ side #2
+       ++++++++ absorbed changes (from zsuskuln d6492c8f)
        +1b
        +>>>>>>> conflict 1 of 1 ends
     [EOF]
