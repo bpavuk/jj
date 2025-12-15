@@ -64,6 +64,9 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   other can be referred to as `xyz/1`. These suffixes are shown in the log when
   necessary to make a change ID unambiguous.
 
+* Early version of a `jj file search` command for searching for a pattern in
+  files (like `git grep`).
+
 ### Fixed bugs
 
 * Broken symlink on Windows. [#6934](https://github.com/jj-vcs/jj/issues/6934).
